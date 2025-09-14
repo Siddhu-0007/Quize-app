@@ -41,7 +41,7 @@ export default function RegisterScreen() {
     }
 
     try {
-      await axios.post("http://192.168.253.62:5000/api/quiz/create", {
+      await axios.post("http://10.206.158.131:5000/api/quiz/create", {
         ...form,
       });
 

@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native";
+import { useLocalSearchParams } from 'expo-router';
 import { useRouter } from "expo-router";
 type Question = {
   question: string;
@@ -15,6 +16,7 @@ type Question = {
 };
 
 export default function QuizCard() {
+  const { api } = useLocalSearchParams();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -23,13 +25,12 @@ export default function QuizCard() {
   const [score, setScore] = useState(0);
   const [showResults, setShowResults] = useState(false);
   const [userAnswers, setUserAnswers] = useState<(string | null)[]>([]);
-
+  const router = useRouter();
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const response = await fetch(
-          "https://opentdb.com/api.php?amount=5&category=21&difficulty=easy&type=multiple&encode=url3986"
-        );
+        console.log(api)
+        const response = await fetch(`${api}`);
         const data = await response.json();
         setQuestions(data.results);
         setLoading(false);
@@ -148,15 +149,23 @@ export default function QuizCard() {
           <TouchableOpacity style={styles.nextButton} onPress={resetQuiz}>
             <Text style={styles.nextButtonText}>Retry Quiz</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.nextButton}
+            onPress={() => router.push("/(tabs)/Home")}
+          >
+            <Text style={styles.nextButtonText}>Back to the Home</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     );
   }
-  const router = useRouter();
+
   const currentQuestion = questions[currentIndex];
   const correctAnswer = decodeURIComponent(currentQuestion.correct_answer);
 
   return (
+    
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerText}>Quiz Application</Text>
@@ -174,12 +183,12 @@ export default function QuizCard() {
             selectedOption === null
               ? styles.optionButton
               : isSelected
-              ? isCorrect
-                ? styles.correctOption
-                : styles.wrongOption
-              : isCorrect
-              ? styles.correctOption
-              : styles.optionButton;
+                ? isCorrect
+                  ? styles.correctOption
+                  : styles.wrongOption
+                : isCorrect
+                  ? styles.correctOption
+                  : styles.optionButton;
 
           return (
             <TouchableOpacity

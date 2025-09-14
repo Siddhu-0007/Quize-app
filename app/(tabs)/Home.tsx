@@ -1,207 +1,225 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
-  ScrollView,
-  StyleSheet,
+  View,
   Text,
   TextInput,
+  StyleSheet,
   TouchableOpacity,
-  View,
+  ScrollView,Image,
+  Touchable
 } from "react-native";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import axios from "axios";
-
-const arrbutton = [
-  { id: 1, name: "Videos" },
-  { id: 2, name: "Information" },
+import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+export default function QuizPage() {
+  const [selected, setSelected] = useState("All");
+  const router = useRouter();
+const categories = [
+  {
+    id: 1,
+    name: "Sport",
+    image: require("@/assets/images/image.png"),
+    api: "https://www.google.com/url?sa=i&url=https%3A%2F%2Fstock.adobe.com%2Fsearch%3Fk%3Dsports&psig=AOvVaw0JgLEQXKeM3cBAJWDH-1af&ust=1757970931202000&source=images&cd=vfe&opi=89978449&ved=0CBUQjRxqFwoTCKDZia2W2Y8DFQAAAAAdAAAAABAE"
+  },
+  {
+    id: 2,
+    name: "GK",
+    image: require("@/assets/images/image.png"),
+    api: "https://opentdb.com/api.php?amount=10&category=9"
+  },
+  {
+    id: 3,
+    name: "Politics",
+    image: require("@/assets/images/image.png"),
+    api: "https://opentdb.com/api.php?amount=10&category=24"
+  },
+  {
+    id: 4,
+    name: "Educational",
+    image: require("@/assets/images/image.png"),
+    api: "https://opentdb.com/api.php?amount=10&category=18"
+  },
+  {
+    id: 5,
+    name: "Science",
+    image: require("@/assets/images/image.png"),
+    api: "https://opentdb.com/api.php?amount=10&category=17"
+  },
+  {
+    id: 6,
+    name: "Maths",
+    image: require("@/assets/images/image.png"),
+    api: "https://opentdb.com/api.php?amount=10&category=19"
+  },
 ];
 
-const App = () => {
-  const [searching, setSearching] = useState("");
-  const [selectedId, setSelectedId] = useState(1);
 
-  const [videos, setVideos] = useState([]);
-  const [information, setInformation] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const videoRes = await axios.get(
-          "https://api.themoviedb.org/3/movie/upcoming?language=en-US&page=1",
-          {
-            headers: {
-              accept: "application/json",
-              Authorization:
-                "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0ZGJlZjk2MGM0ZmZhNDU4MTI0N2JiMzM5OGY1NGM1ZSIsIm5iZiI6MTc1MTM1OTQxNy44ODMwMDAxLCJzdWIiOiI2ODYzOWZiOWQ2ZTg3MGNkM2RjY2Q5NzciLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.jPbmLAK5whMqCoLU9kf2w4VUnGJEs6i8hVmHncGf2rc",
-            },
-          }
-        );
-        setVideos(videoRes.data.results);
-
-        const infoRes = await axios.get(
-          "https://opentdb.com/api.php?amount=10&type=multiple"
-        );
-        setInformation(infoRes.data.results);
-      } catch (error) {
-        console.error("Fetch error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  const getContentToDisplay = () => {
-    if (selectedId === 1) return videos;
-    if (selectedId === 2) return information;
-    return [];
-  };
-
-  const filteredContent = getContentToDisplay().filter((item) => {
-    const title = item.original_title || item.title || item.question || "";
-    return title.toLowerCase().includes(searching.toLowerCase());
+const handleCategoryPress = (category:any) => {
+  router.push({
+    pathname: '/Screens/welcome',
+    params: {
+      api: category.api,
+    },
   });
-
+};
   return (
-    <View style={styles.container}>
-      <View style={styles.bar}>
-        <View style={styles.searchBox}>
-          <FontAwesome
-            name="search"
-            size={20}
-            color="#7965C1"
-            style={styles.icon}
-          />
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* Title */}
+        {/* <Text style={styles.title}>Quiz</Text> */}
+
+        {/* Search Bar with Icon */}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#555" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search"
-            value={searching}
-            onChangeText={setSearching}
+            placeholder="Search..."
+            placeholderTextColor="#888"
           />
         </View>
+
+        {/* Sort Buttons */}
+
+
+        
+
+<View style={styles.cardsContainer}>
+  {categories.map((category) => (
+    <TouchableOpacity
+      key={category.id}
+      style={styles.card}
+      onPress={() => handleCategoryPress(category)}
+    >
+
+<Image
+  source={require("@/assets/images/image.png")}
+  style={{ width: 100, height: 100 ,alignSelf:"center"}}
+/>
+      <View>
+        <Text>{category.name}</Text>
       </View>
+    </TouchableOpacity>
+  ))}
+</View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.buttons}
-      >
-        {arrbutton.map((button) => (
-          <TouchableOpacity
-            key={button.id}
-            style={[
-              styles.button,
-              selectedId === button.id && styles.selectedButton,
-            ]}
-            onPress={() => setSelectedId(button.id)}
-          >
-            <Text
-              style={{
-                color: selectedId === button.id ? "#000" : "#000",
-                textAlign: "center",
-              }}
-            >
-              {button.name}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
 
-      {loading ? (
-        <View style={styles.loading}>
-          <ActivityIndicator size="large" color="#7965C1" />
-        </View>
-      ) : (
-        <ScrollView>
-          {filteredContent.map((item, index) => (
-            <View key={index} style={styles.item}>
-              {item.poster_path && (
-                <Image
-                  source={{
-                    uri: `https://image.tmdb.org/t/p/w500${item.poster_path}`,
-                  }}
-                  style={styles.poster}
-                />
-              )}
-              <Text style={styles.title}>
-                {item.original_title || item.title || item.question}
-              </Text>
-            </View>
-          ))}
-        </ScrollView>
-      )}
-    </View>
+       
+
+      </View>
+    </SafeAreaView>
   );
-};
-
-export default App;
+}
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    paddingTop: 20,
-    paddingHorizontal: 20,
-    backgroundColor: "#FFF2E0",
+    backgroundColor: "#fff",
+    marginTop: 10
   },
-  bar: {
+  container: {
+
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 16,
+    backgroundColor: "#465bb9",
+    color: "#fff",
+    paddingVertical: 12,
+    textAlign: "center",
+  },
+  searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 40,
-  },
-  searchBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderColor: "black",
     borderWidth: 1,
+    borderColor: "#ccc",
     borderRadius: 10,
     paddingHorizontal: 10,
-    height: 50,
-    flex: 1,
+    height: 45,
+    marginHorizontal: 16,
+    marginBottom: 12,
   },
-  icon: {
-    marginRight: 10,
+  searchIcon: {
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    height: "100%",
+    fontSize: 16,
   },
-  buttons: {
+  buttonRow: {
     flexDirection: "row",
-    marginTop: 20,
-    marginLeft: 50,
-  },
-  button: {
-    borderColor: "black",
-    borderWidth: 1,
-    paddingVertical: 10,
-    borderRadius: 15,
-    marginRight: 10,
-    width: 140,
     height: 40,
-    marginBottom: 20,
+    marginBottom: 10
   },
-  selectedButton: {
-    backgroundColor: "#C0C9EE",
+  filterButton: {
+    backgroundColor: "#fff",
+    borderWidth: 2,
+    borderColor: "#465bb9",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginRight: 10,
   },
-  loading: {
-    flex: 1,
+  buttonText: {
+    color: "#465bb9",
+    fontSize: 14,
+    fontWeight: "600",
   },
-  item: {
-    marginBottom: 20,
+  activeButton: {
+    backgroundColor: "#465bb9",
   },
-  poster: {
-    width: "100%",
+  activeButtonText: {
+    color: "#fff",
+    fontWeight: "700",
+  },
+  cardsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginHorizontal: 16,
+    marginTop: 20,
+  },
+  card: {
+    width: "48%",
     height: 200,
+    borderWidth: 1,
+    borderColor: "#ccc",
     borderRadius: 10,
+    marginBottom: 16,
+    backgroundColor: "#f2f2f2",
+    padding:10,
+  },
+
+   cardImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignSelf: "center",
     marginBottom: 10,
   },
-  title: {
+  cardInfo: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  quizTitle: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  quizSubtitle: {
+    fontSize: 14,
+    color: "#555",
+  },
+  quizProgress: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#465bb9",
+  },
+  quizDifficulty: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "red",
   },
 });

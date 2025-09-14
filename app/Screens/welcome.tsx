@@ -1,16 +1,20 @@
 import React from "react";
 import { Text, StyleSheet, View, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
+import { useLocalSearchParams } from 'expo-router';
 export default function Index() {
-  const router=useRouter();
+
+  const { api } = useLocalSearchParams();
+
+  const router = useRouter();
   return (
     <View style={styles.container}>
-   
+
       <View style={styles.header}>
         <Text style={styles.headerText}>Quiz Application</Text>
       </View>
 
-     
+
       <View style={styles.page}>
         <View style={styles.body}>
           <Text style={styles.welcomeText}>Welcome to the Quiz App!</Text>
@@ -18,7 +22,18 @@ export default function Index() {
             This Quiz application check your knownleadge.
           </Text>
 
-          <TouchableOpacity style={styles.button} onPress={()=>{router.push("/Screens/questions")}}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => {
+              router.push({
+                pathname: '/Screens/questions',
+                params: {
+                  api: api,
+                },
+              });
+            }}
+          >
+
             <Text style={styles.buttonText}>Start Quiz</Text>
           </TouchableOpacity>
         </View>
@@ -32,7 +47,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFF2E0",
     alignItems: "center",
-    paddingTop: 60, 
+    paddingTop: 60,
   },
   header: {
     position: "absolute",
@@ -42,7 +57,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 10,
     zIndex: 10,
-    marginTop:40,
+    marginTop: 40,
   },
   headerText: {
     fontSize: 24,
@@ -58,8 +73,8 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    marginTop: 250, 
-    alignContent:"center",
+    marginTop: 250,
+    alignContent: "center",
   },
   body: {
     padding: 25,
