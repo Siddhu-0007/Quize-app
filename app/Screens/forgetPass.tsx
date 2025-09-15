@@ -10,41 +10,32 @@ import {
 } from "react-native";
 import axios from "axios";
 import { useRouter } from "expo-router";
+import api from "../utils/api";
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
 
-  const handleRecovery = async () => {
-    if (!email) {
-      Alert.alert("Validation Error", "Please enter your email.");
-      return;
+ const handleRecovery = async () => {
+  if (!email) return Alert.alert("Validation Error", "Please enter your email.");
+
+  try {
+    const response = await api.post("/checkEmail", { email });
+
+    if (response.data.exists) {
+      Alert.alert("Success", "Email found. Proceeding to reset...");
+      router.push({ pathname: "/Screens/resetPass", params: { email } });
+    } else {
+      Alert.alert("Error", "Email not found in our records.");
     }
-
-    try {
-      const response = await axios.post(
-        "http://192.168.253.62:5000/api/quiz/checkEmail",
-        { email }
-      );
-
-      if (response.data.exists) {
-        Alert.alert("Success", "Email found. Proceeding to reset...");
-        router.push({
-          pathname: "/Screens/resetPass",
-          params: { email },
-        });
-      } else {
-        Alert.alert("Error", "Email not found in our records.");
-      }
-    } catch (error: any) {
-      console.error("Error checking email:", error);
-      Alert.alert(
-        "Server Error",
-        error?.response?.data?.message || "Something went wrong. Please try again later."
-      );
-    }
-  };
-
+  } catch (error: any) {
+    console.error("Error checking email:", error);
+    Alert.alert(
+      "Server Error",
+      error?.response?.data?.message || "Something went wrong."
+    );
+  }
+};
   return (
     <View style={styles.container}>
       <Text style={styles.logo}>

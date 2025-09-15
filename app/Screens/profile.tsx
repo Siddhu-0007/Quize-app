@@ -1,3 +1,4 @@
+// ProfileWithDrawer.tsx
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -6,36 +7,71 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ScrollView,
+  Alert,
+  Platform,
 } from "react-native";
+import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
-import { createDrawerNavigator } from "@react-navigation/drawer";
+import {
+  createDrawerNavigator,
+  DrawerContentScrollView,
+  DrawerItem,
+} from "@react-navigation/drawer";
 import { DrawerActions } from "@react-navigation/native";
-
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import api from "../utils/api";
 const Drawer = createDrawerNavigator();
 
+// ---------------- Auth Helpers ----------------
+const setUserLoggedIn = async (user: any) => {
+  await AsyncStorage.setItem("user", JSON.stringify(user));
+  await AsyncStorage.setItem("isLoggedIn", "true");
+};
+
+const getUserLoggedIn = async () => {
+  const data = await AsyncStorage.getItem("user");
+  return data ? JSON.parse(data) : null;
+};
+
+// ---------------- Profile Screen ----------------
 const ProfileContent = ({ navigation, route }: any) => {
-  const [user, setUser] = useState({
-    username: "",
+  const [user, setUser] = useState<any>({
+    userName: "",
     email: "",
     address: "",
     school: "",
     image: "",
+    _id: "",
   });
   const [editMode, setEditMode] = useState(false);
   const router = useRouter();
 
-  const loadUserData = async () => {
-    const data = await AsyncStorage.getItem("user");
-    if (data) setUser(JSON.parse(data));
-  };
+  // Fetch user from backend
+const loadUserData = async () => {
+  try {
+    const loggedUser = await getUserLoggedIn();
+    if (!loggedUser) return;
+
+    const res = await api.get(`/getUser/${loggedUser._id}`);
+    const data = res.data;
+    setUser({
+      username: data.userName || data.username,
+      email: data.email,
+      address: data.address || "",
+      school: data.school || "",
+      image: data.image || "",
+      _id: data._id,
+    });
+  } catch (err) {
+    console.error("Error fetching user:", err);
+    Alert.alert("Error", "Failed to load user data");
+  }
+};
 
   const handleImagePick = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
     if (status !== "granted") {
       Alert.alert("Permission denied", "Camera access is required.");
       return;
@@ -50,22 +86,33 @@ const ProfileContent = ({ navigation, route }: any) => {
 
       if (!result.canceled && result.assets?.length > 0) {
         const selectedImage = result.assets[0].uri;
-        setUser((prev) => ({ ...prev, image: selectedImage }));
+        setUser((prev: any) => ({ ...prev, image: selectedImage }));
       }
-    } catch (err) {
+    } catch {
       Alert.alert("Error", "Failed to pick image.");
     }
   };
 
-  const handleSave = async () => {
-    await AsyncStorage.setItem("user", JSON.stringify(user));
-    Alert.alert("Success", "Profile updated.");
-    setEditMode(false);
-  };
+const handleSave = async () => {
+  try {
+    if (!user._id) return;
+    const res = await api.put(`/update/${user._id}`, user);
+    if (res.status === 200) {
+      Alert.alert("Success", "Profile updated.");
+      setEditMode(false);
+      await loadUserData();
+    } else {
+      Alert.alert("Error", "Failed to update profile");
+    }
+  } catch (err) {
+    console.error("Error updating user:", err);
+    Alert.alert("Error", "Failed to update profile");
+  }
+};
 
   const handleLogout = async () => {
     await AsyncStorage.removeItem("isLoggedIn");
-    Alert.alert("Logged Out", "You have been logged out.");
+    await AsyncStorage.removeItem("user");
     router.replace("/Screens/login");
   };
 
@@ -84,26 +131,21 @@ const ProfileContent = ({ navigation, route }: any) => {
   }, [route.params]);
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
-        >
-          <Text style={styles.menuIcon}>☰</Text>
+        <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
+          <Ionicons name="menu" size={28} color="#7965C1" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>My Profile</Text>
+        <Text style={styles.headerText}>                 My Profile</Text>
       </View>
 
       <View style={styles.box}>
-        <TouchableOpacity
-          onPress={handleImagePick}
-          style={styles.imageContainer}
-        >
+        <TouchableOpacity onPress={handleImagePick} style={styles.imageContainer}>
           {user.image ? (
             <Image source={{ uri: user.image }} style={styles.profileImage} />
           ) : (
             <View style={styles.placeholder}>
-              <Text>Choose Image</Text>
+              <Text style={{ color: "#888" }}>Choose Image</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -118,11 +160,7 @@ const ProfileContent = ({ navigation, route }: any) => {
           />
 
           <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={[styles.input, styles.disabledInput]}
-            value={user.email}
-            editable={false}
-          />
+          <TextInput style={[styles.input, styles.disabledInput]} value={user.email} editable={false} />
 
           <Text style={styles.label}>Address</Text>
           <TextInput
@@ -147,135 +185,96 @@ const ProfileContent = ({ navigation, route }: any) => {
           </TouchableOpacity>
         )}
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
+// ---------------- Results Screen ----------------
+const ResultsScreen = () => (
+  <View style={styles.resultsContainer}>
+    <Text style={styles.resultsText}>Your Results Will Appear Here</Text>
+  </View>
+);
+
+// ---------------- Custom Drawer ----------------
+const CustomDrawerContent = (props: any) => (
+  <DrawerContentScrollView {...props} contentContainerStyle={{ flex: 1, paddingTop: 40 }}>
+    <DrawerItem
+      label="My Profile"
+      icon={({ color, size }) => <Ionicons name="person-circle-outline" size={size} color={color} />}
+      onPress={() => props.navigation.navigate("Profile")}
+    />
+    <DrawerItem
+      label="Edit Profile"
+      icon={({ color, size }) => <MaterialIcons name="edit" size={size} color={color} />}
+      onPress={() => props.navigation.navigate("Profile", { edit: true })}
+    />
+    <DrawerItem
+      label="Results"
+      icon={({ color, size }) => <Ionicons name="stats-chart-outline" size={size} color={color} />}
+      onPress={() => props.navigation.navigate("Results")}
+    />
+    <DrawerItem
+      label="Logout"
+      icon={({ color, size }) => <MaterialIcons name="logout" size={size} color={color} />}
+      onPress={() => props.navigation.navigate("Profile", { logout: true })}
+    />
+  </DrawerContentScrollView>
+);
+
+// ---------------- Drawer Navigator ----------------
 const ProfileWithDrawer = () => {
   return (
     <Drawer.Navigator
       initialRouteName="Profile"
       screenOptions={{
         headerShown: false,
-        drawerActiveTintColor: "#4E6C50",
+        drawerActiveTintColor: "#ff5e9c",
+        drawerLabelStyle: { fontSize: 16, fontWeight: "600" },
+        drawerStyle: { width: 200 },
       }}
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
     >
-      <Drawer.Screen
-        name="Profile"
-        component={ProfileContent}
-        options={{ drawerLabel: "My Profile" }}
-      />
-      <Drawer.Screen
-        name="Edit Profile"
-        component={ProfileContent}
-        initialParams={{ edit: true }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate("Profile", { edit: true });
-          },
-        })}
-      />
-      <Drawer.Screen
-        name="Logout"
-        component={ProfileContent}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate("Profile", { logout: true });
-          },
-        })}
-        options={{ drawerLabel: "Logout" }}
-      />
+      <Drawer.Screen name="Profile" component={ProfileContent} />
+      <Drawer.Screen name="Results" component={ResultsScreen} />
     </Drawer.Navigator>
   );
 };
 
 export default ProfileWithDrawer;
+
+// ---------------- Styles ----------------
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "#FFF2E0",
-
-  },
-  menuIcon: {
-    fontSize: 20,
-    color: "#FFF2E0",
-    zIndex: 1,
-    left: 10,
-    top:4,
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+    backgroundColor: "#fff8f9",
   },
   header: {
     position: "absolute",
-    top: 0,
+    top: 40,
     width: "100%",
-    backgroundColor: "#7965C1",
-    paddingVertical: 20,
-    marginTop: 40,
     flexDirection: "row",
-    gap: 20,
-  },
-  headerText: {
-    fontSize: 24,
-    color: "#FFF2E0",
-    fontWeight: "bold",
-  },
-  box: {
-    marginTop: 120,
-    padding: 20,
-  },
-  imageContainer: {
-    alignSelf: "center",
-    marginBottom: 20,
-  },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 2,
-    borderColor: "#7965C1",
-  },
-  placeholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "#eee",
     alignItems: "center",
-    justifyContent: "center",
+    paddingHorizontal: 15,
   },
-  inputSection: {
-    marginTop: 10,
+  headerText: { fontSize: 22, fontWeight: "bold", color: "#333", marginLeft: 15 },
+  box: {
+    width: "100%",
+    padding: 20,
+    alignItems: "center",
   },
-  label: {
-    fontSize: 14,
-    color: "#333",
-    marginTop: 10,
-  },
-  input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    backgroundColor: "#fff",
-    marginBottom: 10,
-  },
-  disabledInput: {
-    backgroundColor: "#C0C9EE",
-    color: "#000",
-  },
-  saveButton: {
-    backgroundColor: "#4E6C50",
-    paddingVertical: 10,
-    borderRadius: 10,
-    marginTop: 20,
-    left: 150,
-    width: 100,
-  },
-  saveText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-    textAlign: "center",
-  },
+  imageContainer: { marginBottom: 20 },
+  profileImage: { width: 120, height: 120, borderRadius: 60, borderWidth: 3, borderColor: "#ff5e9c" },
+  placeholder: { width: 120, height: 120, borderRadius: 60, backgroundColor: "#eee", alignItems: "center", justifyContent: "center" },
+  inputSection: { marginTop: 10, width: "100%" },
+  label: { fontSize: 14, color: "#555", marginBottom: 5 },
+  input: { height: 50, backgroundColor: "#f1ebebff", borderRadius: 10, paddingHorizontal: 12, marginBottom: 15, fontSize: 16 },
+  disabledInput: { color: "black", backgroundColor: "#f1ebebff" },
+  saveButton: { backgroundColor: "#7965C1", paddingVertical: 12, borderRadius: 25, marginTop: 20, width: 140, alignItems: "center" },
+  saveText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  resultsContainer: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff8f9" },
+  resultsText: { fontSize: 20, fontWeight: "bold", color: "#333" },
 });
