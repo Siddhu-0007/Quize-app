@@ -11,7 +11,7 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import axios from "axios";
 import { Ionicons } from "@expo/vector-icons";
-
+import api from "../utils/api";
 export default function ResetPasswordScreen() {
   const { email } = useLocalSearchParams();
   const router = useRouter();
@@ -20,34 +20,20 @@ export default function ResetPasswordScreen() {
   const [confirmPass, setConfirmPass] = useState("");
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+const handleReset = async () => {
+  if (!newPass || !confirmPass) return Alert.alert("Validation Error", "Please fill both fields.");
+  if (newPass !== confirmPass) return Alert.alert("Validation Error", "Passwords do not match.");
 
-  const handleReset = async () => {
-    if (!newPass || !confirmPass) {
-      Alert.alert("Validation Error", "Please fill in both fields.");
-      return;
-    }
-    if (newPass !== confirmPass) {
-      Alert.alert("Validation Error", "Passwords do not match.");
-      return;
-    }
-
-    try {
-      await axios.post("http://192.168.253.62:5000/api/quiz/resetPassword", {
-        email,
-        newPassword: newPass,
-      });
-
-      Alert.alert("Success", "Password updated successfully!", [
-        { text: "OK", onPress: () => router.replace("/Screens/login") },
-      ]);
-    } catch (error: any) {
-      console.error("Reset error:", error);
-      Alert.alert(
-        "Error",
-        error?.response?.data?.message || "Failed to reset password."
-      );
-    }
-  };
+  try {
+    await api.post("/resetPassword", { email, newPassword: newPass });
+    Alert.alert("Success", "Password updated successfully!", [
+      { text: "OK", onPress: () => router.replace("/Screens/login") },
+    ]);
+  } catch (error: any) {
+    console.error("Reset error:", error);
+    Alert.alert("Error", error?.response?.data?.message || "Failed to reset password.");
+  }
+};
 
   return (
     <View style={styles.container}>

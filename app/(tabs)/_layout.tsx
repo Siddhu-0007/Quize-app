@@ -6,6 +6,7 @@ import Welcome from "./welcome";
 import Home from "./Home";
 import Profile1  from "../Screens/profile";
 import Question from "../Screens/questions";
+import ChatScreen from "./Chat";
 const Tab = createBottomTabNavigator();
 
 export default function TabNavigator() {
@@ -24,10 +25,8 @@ export default function TabNavigator() {
             case "Home":
               iconName = "home-outline";
               break;
-            case "Browser":
-              iconName = "search-outline";
-              break;
-            case "Discover":
+          
+            case "ChatScreen":
               iconName = "compass-outline";
               break;
             case "Profile":
@@ -45,8 +44,8 @@ export default function TabNavigator() {
       })}
     >
       <Tab.Screen name="Home" component={Home} />
-       <Tab.Screen name="Browser" component={Welcome} />
-       <Tab.Screen name="Discover" component={Question} /> 
+ 
+       <Tab.Screen name="ChatBot" component={ChatScreen} /> 
       <Tab.Screen name="Profile" component={Profile1} />
     </Tab.Navigator>
   );

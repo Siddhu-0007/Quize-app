@@ -13,7 +13,7 @@ type Question = {
   correct_answer: string;
   incorrect_answers: string[];
 };
-
+import api from "../utils/api";
 export default function QuizCard() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
