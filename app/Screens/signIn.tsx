@@ -12,7 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import { useRouter } from "expo-router";
-
+import api from "../utils/api";
 export default function RegisterScreen() {
   const router = useRouter();
 
@@ -41,9 +41,7 @@ export default function RegisterScreen() {
     }
 
     try {
-      await axios.post("http://192.168.253.62:5000/api/quiz/create", {
-        ...form,
-      });
+    await api.post("/create", form);
 
       Alert.alert("Success", "Account created successfully!");
       router.push("/Screens/login");

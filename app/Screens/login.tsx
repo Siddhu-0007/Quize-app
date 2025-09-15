@@ -14,41 +14,37 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { setUserLoggedIn } from "../utils/auth";
-
+import api from "../utils/api";
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Validation", "Please enter both email and password");
-      return;
+ const handleLogin = async () => {
+  if (!email || !password) {
+    Alert.alert("Validation", "Please enter both email and password");
+    return;
+  }
+
+  try {
+    const res = await api.post("/login", { email, password });
+
+    if (res.data.success) {
+      await setUserLoggedIn(res.data.user);
+      Alert.alert("Login Successful", `Welcome ${res.data.user}`);
+      router.push("/(tabs)/Home");
+    } else {
+      Alert.alert("Login Failed", res.data.message || "Invalid credentials");
     }
-
-    try {
-      const res = await axios.post("http://192.168.253.62:5000/api/quiz/login", {
-        email,
-        password,
-      });
-
-      if (res.data.success) {
-  await setUserLoggedIn(res.data.user); // save user
-
-        Alert.alert("Login Successful", `Welcome ${res.data.user.userName}`);
-        router.push("/(tabs)/Home");
-      } else {
-        Alert.alert("Login Failed", res.data.message || "Invalid credentials");
-      }
-    } catch (error: any) {
-      console.error("Login error:", error);
-      Alert.alert(
-        "Error",
-        error?.response?.data?.message || "Something went wrong"
-      );
-    }
-  };
+  } catch (error: any) {
+    console.error("Login error:", error);
+    Alert.alert(
+      "Error",
+      error?.response?.data?.message || "Something went wrong"
+    );
+  }
+};
 
   return (
     <View style={styles.container}>
